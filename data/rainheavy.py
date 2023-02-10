@@ -1,5 +1,13 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: rainheavy.py
+
+
 import os
 from data import srdata
+
 
 class RainHeavy(srdata.SRData):
     def __init__(self, args, name='RainHeavy', train=True, benchmark=False):
@@ -21,4 +29,3 @@ class RainHeavy(srdata.SRData):
         print(self.apath)
         self.dir_hr = os.path.join(self.apath, 'norain')
         self.dir_lr = os.path.join(self.apath, 'rain')
-

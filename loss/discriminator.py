@@ -1,6 +1,13 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: discriminator.py
+
 from model import common
 
 import torch.nn as nn
+
 
 class Discriminator(nn.Module):
     def __init__(self, args, gan_type='GAN'):
@@ -42,4 +49,3 @@ class Discriminator(nn.Module):
         output = self.classifier(features.view(features.size(0), -1))
 
         return output
-

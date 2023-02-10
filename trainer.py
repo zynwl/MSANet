@@ -1,25 +1,26 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:03
+# @Author  : zyn
+# @Email : zyn962464@gmail.com
+# @FileName: trianer.py
+
 import os
-import math
-from decimal import Decimal
 import utility
-import IPython
-import torch
-import re
-from torch.autograd import Variable
 from tqdm import tqdm
-import scipy.io as sio 
-import matplotlib
-import matplotlib.pyplot as plt
-import pylab
 import numpy as np
+from decimal import Decimal
+
+import torch
 import torch.nn as nn
-import torchvision
+
 from cal_ssim import SSIM
-#from skimage.measure import compare_ssim
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # 保证程序中的GPU序号是和硬件中的序号是相同的
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"  # 使用几块GPU
+
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-class Trainer():
+
+
+class Trainer(object):
     def __init__(self, args, loader, my_model, my_loss, ckp):
         self.args = args
         self.scale = args.scale
@@ -35,8 +36,10 @@ class Trainer():
             self.optimizer.load_state_dict(
                 torch.load(os.path.join(ckp.dir, 'optimizer.pt'))
             )
-            for _ in range(len(ckp.log)): self.scheduler.step()
-            for _ in range(len(ckp.ssim_log)): self.scheduler.step()
+            for _ in range(len(ckp.log)):
+                self.scheduler.step()
+            for _ in range(len(ckp.ssim_log)):
+                self.scheduler.step()
         self.error_last = 1e8
 
     def train(self):
@@ -58,7 +61,7 @@ class Trainer():
         loss_Ls_all = 0
         loss_Hs_all = 0
         loss_B_all = 0
-        loss_R_all=0
+        loss_R_all = 0
         loss_U_all = 0
         loss_L_all = 0
         loss_H_all = 0
@@ -69,7 +72,7 @@ class Trainer():
             loss_Us = 0
             loss_Ls = 0
             loss_Hs = 0
-            cnt = cnt+1
+            cnt = cnt + 1
             lr, hr = self.prepare(lr, hr)
             timer_data.hold()
             timer_model.tic()
@@ -77,31 +80,36 @@ class Trainer():
             self.optimizer.zero_grad()
             I = torch.ones(lr.shape[0], lr.shape[1], lr.shape[2], lr.shape[3])
             I = I.to(device)
-            B0, ListB, ListR,ListU,ListE = self.model(lr, idx_scale)
+            B0, ListB, ListR, ListU, ListE = self.model(lr, idx_scale)
             #B0, ListB, ListR, ListE = self.model(lr, idx_scale)
-            
+
             #l_h = torch.sigmoid(lr-hr)
             #LL = (torch.sigmoid(lr-hr)-0.5)*2
-            l_h = lr-hr
+            l_h = lr - hr
             LL1 = l_h.cpu().numpy()
-            LL1 = np.where(LL1>0, 1, 0)
+            LL1 = np.where(LL1 > 0, 1, 0)
             LL = torch.from_numpy(LL1)
             LL = LL.type(torch.FloatTensor)
             LL = LL.to(device)
             self.f = nn.L1Loss()
             for j in range(self.S):
-                loss_Bs = float(loss_Bs) + 0.1*self.loss(ListR[j], hr)
-                loss_Rs = float(loss_Rs) + 0.1*self.loss(torch.mul(ListU[j],ListB[j])+ListE[j],lr-hr)
-                loss_Ls = float(loss_Ls) + 0.1*self.f(ListU[j], LL)
-                loss_Us = float(loss_Us) + 0.1*(1-self.ssim(ListR[j], hr))
-                loss_Hs = float(loss_Hs) + 0.1*(1-self.ssim(torch.mul(ListU[j],ListB[j])+ListE[j],lr-hr))
+                loss_Bs = float(loss_Bs) + 0.1 * self.loss(ListR[j], hr)
+                loss_Rs = float(
+                    loss_Rs) + 0.1 * self.loss(torch.mul(ListU[j], ListB[j]) + ListE[j], lr - hr)
+                loss_Ls = float(loss_Ls) + 0.1 * self.f(ListU[j], LL)
+                loss_Us = float(loss_Us) + 0.1 * (1 - self.ssim(ListR[j], hr))
+                loss_Hs = float(
+                    loss_Hs) + 0.1 * (1 - self.ssim(torch.mul(ListU[j], ListB[j]) + ListE[j], lr - hr))
             loss_B = self.loss(ListR[-1], hr)
-            loss_R = 0.9*self.loss(torch.mul(ListU[-1],ListB[-1])+ListE[-1],lr-hr)
-            loss_L = 0.9*self.f(ListU[-1], LL)
-            loss_U = 1*(1-self.ssim(ListR[-1], hr))
-            loss_H = 0.9*(1-self.ssim(torch.mul(ListU[-1],ListB[-1])+ListE[-1],lr-hr))             
-            loss_B0 = 0.1* self.loss(B0, hr)
-            loss = loss_B + loss_Bs + loss_Rs + loss_R+loss_B0+loss_Ls+loss_L+loss_Us+loss_U+loss_Hs+loss_H#
+            loss_R = 0.9 * \
+                self.loss(torch.mul(ListU[-1], ListB[-1]) + ListE[-1], lr - hr)
+            loss_L = 0.9 * self.f(ListU[-1], LL)
+            loss_U = 1 * (1 - self.ssim(ListR[-1], hr))
+            loss_H = 0.9 * \
+                (1 - self.ssim(torch.mul(ListU[-1], ListB[-1]) + ListE[-1], lr - hr))
+            loss_B0 = 0.1 * self.loss(B0, hr)
+            loss = loss_B + loss_Bs + loss_Rs + loss_R + loss_B0 + \
+                loss_Ls + loss_L + loss_Us + loss_U + loss_Hs + loss_H
             loss_Bs_all = loss_Bs_all + loss_Bs
             loss_B_all = loss_B_all + loss_B
             loss_Rs_all = loss_Rs_all + loss_Rs
@@ -129,7 +137,7 @@ class Trainer():
                     timer_model.release(),
                     timer_data.release()))
             timer_data.tic()
-        print(loss_Bs_all/cnt)
+        print(loss_Bs_all / cnt)
         print(loss_B_all / cnt)
         print(loss_Rs_all / cnt)
         print(loss_R_all / cnt)
@@ -163,8 +171,9 @@ class Trainer():
                         lr, hr = self.prepare(lr, hr)
                     else:
                         lr, = self.prepare(lr)
-                    B0, ListB,ListR,ListU,ListE= self.model(lr, idx_scale)
-                    sr = utility.quantize(ListR[-1], self.args.rgb_range)    # restored background at the last stage
+                    B0, ListB, ListR, ListU, ListE = self.model(lr, idx_scale)
+                    # restored background at the last stage
+                    sr = utility.quantize(ListR[-1], self.args.rgb_range)
                     save_list = [sr]
                     if not no_eval:
                         eval_acc += utility.calc_psnr(
@@ -173,11 +182,11 @@ class Trainer():
                         )
                         save_list.extend([lr, hr])
 
-                    #if self.args.save_results:
+                    # if self.args.save_results:
                     self.ckp.save_results(filename, save_list, scale)
                 self.ckp.log[-1, idx_scale] = eval_acc / len(self.loader_test)
                 #ssim = ssim1 / len(self.loader_test)
-                #print(ssim)
+                # print(ssim)
                 best = self.ckp.log.max(0)
                 self.ckp.write_log(
                     '[{} x{}]\tPSNR: {:.3f} (Best: {:.3f} @epoch {})'.format(
@@ -188,7 +197,7 @@ class Trainer():
                         best[1][idx_scale] + 1
                     )
                 )
-        
+
         self.ckp.write_log(
             'Total time: {:.2f}s\n'.format(timer_test.toc()), refresh=True
         )
@@ -197,10 +206,12 @@ class Trainer():
 
     def prepare(self, *args):
         device = torch.device('cpu' if self.args.cpu else 'cuda:0')
+
         def _prepare(tensor):
-            if self.args.precision == 'half': tensor = tensor.half()
+            if self.args.precision == 'half':
+                tensor = tensor.half()
             return tensor.to(device)
-           
+
         return [_prepare(a) for a in args]
 
     def terminate(self):

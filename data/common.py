@@ -1,26 +1,26 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: common.py
+
 import random
 
 import numpy as np
 import skimage.color as sc
 
 import torch
-from torchvision import transforms
+
 
 def get_patch(*args, patch_size=96, scale=1, multi_scale=False):
     ih, iw = args[0].shape[:2]
 
-    #p = scale if multi_scale else 1
-    #tp = p * patch_size
-    #ip = tp // scale
-
     tp = patch_size
     ip = patch_size
-
 
     ix = random.randrange(0, iw - ip + 1)
     iy = random.randrange(0, ih - ip + 1)
 
-    #tx, ty = scale * ix, scale * iy
     tx, ty = ix, iy
 
     ret = [
@@ -29,6 +29,7 @@ def get_patch(*args, patch_size=96, scale=1, multi_scale=False):
     ]
 
     return ret
+
 
 def set_channel(*args, n_channels=3):
     def _set_channel(img):
@@ -45,6 +46,7 @@ def set_channel(*args, n_channels=3):
 
     return [_set_channel(a) for a in args]
 
+
 def np2Tensor(*args, rgb_range=255):
     def _np2Tensor(img):
         np_transpose = np.ascontiguousarray(img.transpose((2, 0, 1)))
@@ -55,17 +57,16 @@ def np2Tensor(*args, rgb_range=255):
 
     return [_np2Tensor(a) for a in args]
 
+
 def augment(*args, hflip=True, rot=True):
     hflip = hflip and random.random() < 0.5
     vflip = rot and random.random() < 0.5
     rot90 = rot and random.random() < 0.5
 
     def _augment(img):
-        if hflip: img = img[:, ::-1, :]
-    #    if vflip: img = img[::-1, :, :]
-      #  if rot90: img = img.transpose(1, 0, 2)
-        
+        if hflip:
+            img = img[:, ::-1, :]
+
         return img
 
     return [_augment(a) for a in args]
-

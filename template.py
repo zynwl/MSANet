@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:03
+# @Author  : zyn
+# @Email : zyn962464@gmail.com
+# @FileName: template.py
+
 def set_template(args):
     # Set the templates here
     if args.template.find('jpeg') >= 0:

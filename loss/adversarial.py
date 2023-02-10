@@ -1,12 +1,17 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: adversarial.py
+
 import utility
-from model import common
 from loss import discriminator
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.autograd import Variable
+
 
 class Adversarial(nn.Module):
     def __init__(self, args, gan_type):
@@ -74,13 +79,13 @@ class Adversarial(nn.Module):
 
         # Generator loss
         return loss_g
-    
+
     def state_dict(self, *args, **kwargs):
         state_discriminator = self.discriminator.state_dict(*args, **kwargs)
         state_optimizer = self.optimizer.state_dict()
 
         return dict(**state_discriminator, **state_optimizer)
-               
+
 # Some references
 # https://github.com/kuc2477/pytorch-wgan-gp/blob/master/model.py
 # OR

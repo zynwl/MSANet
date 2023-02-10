@@ -1,4 +1,9 @@
-import torch
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:03
+# @Author  : zyn
+# @Email : zyn962464@gmail.com
+# @FileName: main.py
+
 import os
 import utility
 import data
@@ -6,8 +11,8 @@ import model
 import loss
 from option import args
 from trainer import Trainer
-import multiprocessing
-import time
+
+import torch
 
 def print_network(net):
     num_params = 0

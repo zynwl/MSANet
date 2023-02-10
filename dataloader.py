@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:03
+# @Author  : zyn
+# @Email : zyn962464@gmail.com
+# @FileName: dataloader.py
+
+
 import sys
 import threading
 import queue
@@ -26,7 +33,16 @@ if sys.version_info[0] == 2:
 else:
     import queue
 
-def _ms_loop(dataset, index_queue, data_queue, collate_fn, scale, seed, init_fn, worker_id):
+
+def _ms_loop(
+        dataset,
+        index_queue,
+        data_queue,
+        collate_fn,
+        scale,
+        seed,
+        init_fn,
+        worker_id):
     global _use_shared_memory
     _use_shared_memory = True
     _set_worker_signal_handlers()
@@ -51,6 +67,7 @@ def _ms_loop(dataset, index_queue, data_queue, collate_fn, scale, seed, init_fn,
             data_queue.put((idx, ExceptionWrapper(sys.exc_info())))
         else:
             data_queue.put((idx, samples))
+
 
 class _MSDataLoaderIter(_DataLoaderIter):
     def __init__(self, loader):
@@ -105,8 +122,12 @@ class _MSDataLoaderIter(_DataLoaderIter):
                     maybe_device_id = None
                 self.worker_manager_thread = threading.Thread(
                     target=_worker_manager_loop,
-                    args=(self.worker_result_queue, self.data_queue, self.done_event, self.pin_memory,
-                          maybe_device_id))
+                    args=(
+                        self.worker_result_queue,
+                        self.data_queue,
+                        self.done_event,
+                        self.pin_memory,
+                        maybe_device_id))
                 self.worker_manager_thread.daemon = True
                 self.worker_manager_thread.start()
             else:
@@ -124,12 +145,13 @@ class _MSDataLoaderIter(_DataLoaderIter):
             for _ in range(2 * self.num_workers):
                 self._put_indices()
 
+
 class MSDataLoader(DataLoader):
     def __init__(
-        self, args, dataset, batch_size=1, shuffle=False,
-        sampler=None, batch_sampler=None,
-        collate_fn=default_collate, pin_memory=False, drop_last=False,
-        timeout=0, worker_init_fn=None):
+            self, args, dataset, batch_size=1, shuffle=False,
+            sampler=None, batch_sampler=None,
+            collate_fn=default_collate, pin_memory=False, drop_last=False,
+            timeout=0, worker_init_fn=None):
 
         super(MSDataLoader, self).__init__(
             dataset, batch_size=batch_size, shuffle=shuffle,

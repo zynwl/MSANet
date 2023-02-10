@@ -1,12 +1,16 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: demo.py
+
 import os
+import imageio
+
+import torch.utils.data as data
 
 from data import common
 
-import numpy as np
-import imageio
-
-import torch
-import torch.utils.data as data
 
 class Demo(data.Dataset):
     def __init__(self, args, name='Demo', train=False, benchmark=False):
@@ -38,4 +42,3 @@ class Demo(data.Dataset):
 
     def set_scale(self, idx_scale):
         self.idx_scale = idx_scale
-

@@ -1,15 +1,19 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: __init__.py
+
+import torch.nn as nn
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
 import os
 from importlib import import_module
 
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
-import numpy as np
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 class Loss(nn.modules.loss._Loss):
     def __init__(self, args, ckp):
@@ -41,14 +45,14 @@ class Loss(nn.modules.loss._Loss):
                 module = import_module('loss.joint')
                 loss_function = getattr(module, 'Joint')()
 
-           
             self.loss.append({
                 'type': loss_type,
-                'weight': float( weight),
+                'weight': float(weight),
                 'function': loss_function}
             )
             if loss_type.find('GAN') >= 0:
-                self.loss.append({'type': 'DIS', 'weight': 1, 'function': None})
+                self.loss.append(
+                    {'type': 'DIS', 'weight': 1, 'function': None})
 
         if len(self.loss) > 1:
             self.loss.append({'type': 'Total', 'weight': 0, 'function': None})
@@ -62,20 +66,22 @@ class Loss(nn.modules.loss._Loss):
 
         device = torch.device('cpu' if args.cpu else 'cuda')
         self.loss_module.to(device)
-        if args.precision == 'half': self.loss_module.half()
+        if args.precision == 'half':
+            self.loss_module.half()
         if not args.cpu and args.n_GPUs > 1:
             self.loss_module = nn.DataParallel(
                 self.loss_module, range(args.n_GPUs)
             )
 
-        if args.load != '.': self.load(ckp.dir, cpu=args.cpu)
+        if args.load != '.':
+            self.load(ckp.dir, cpu=args.cpu)
 
     def forward(self, sr, hr, lr=None, detect_map=None):
         losses = []
         for i, l in enumerate(self.loss):
             if l['function'] is not None:
 
-                if str(lr)!='None':
+                if str(lr) != 'None':
                     loss = l['function'](sr, hr, lr, detect_map)
                     effective_loss = l['weight'] * loss
                     losses.append(effective_loss)
@@ -116,10 +122,10 @@ class Loss(nn.modules.loss._Loss):
 
     def plot_loss(self, apath, epoch):
         axis = np.linspace(1, epoch, epoch)
-        for i, l in enumerate(self.loss):      
+        for i, l in enumerate(self.loss):
            # j = i
-       #     if i == len(self.loss)-1:
-              #  break
+           #     if i == len(self.loss)-1:
+            #  break
             label = '{} Loss'.format(l['type'])
             fig = plt.figure()
             plt.title(label)
@@ -154,5 +160,5 @@ class Loss(nn.modules.loss._Loss):
         self.log = torch.load(os.path.join(apath, 'loss_log.pt'))
         for l in self.loss_module:
             if hasattr(l, 'scheduler'):
-                for _ in range(len(self.log)): l.scheduler.step()
-
+                for _ in range(len(self.log)):
+                    l.scheduler.step()

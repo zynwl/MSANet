@@ -1,19 +1,23 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:03
+# @Author  : zyn
+# @Email : zyn962464@gmail.com
+# @FileName: utility.py
+
+import torch.optim.lr_scheduler as lrs
+import torch.optim as optim
+import torch
+import scipy.misc as misc
+import numpy as np
+import matplotlib.pyplot as plt
 import os
 import math
 import time
 import datetime
-from functools import reduce
 
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
-import numpy as np
-import scipy.misc as misc
-
-import torch
-import torch.optim as optim
-import torch.optim.lr_scheduler as lrs
 
 class timer():
     def __init__(self):
@@ -38,6 +42,7 @@ class timer():
     def reset(self):
         self.acc = 0
 
+
 class checkpoint():
     def __init__(self, args):
         self.args = args
@@ -46,7 +51,8 @@ class checkpoint():
         now = datetime.datetime.now().strftime('%Y-%m-%d-%H:%M:%S')
 
         if args.load == '.':
-            if args.save == '.': args.save = now
+            if args.save == '.':
+                args.save = now
             self.dir = '../experiment/' + args.save
         else:
             self.dir = '../experiment/' + args.load
@@ -61,7 +67,8 @@ class checkpoint():
             args.load = '.'
 
         def _make_dir(path):
-            if not os.path.exists(path): os.makedirs(path)
+            if not os.path.exists(path):
+                os.makedirs(path)
 
         _make_dir(self.dir)
         _make_dir(self.dir + '/model')
@@ -120,14 +127,17 @@ class checkpoint():
 
     def save_results(self, filename, save_list, scale):
         filename = '{}/results/{}_x{}_'.format(self.dir, filename, scale)
-        postfix = ('SR','LR', 'HR')
+        postfix = ('SR', 'LR', 'HR')
         for v, p in zip(save_list, postfix):
             normalized = v[0].data.mul(255 / self.args.rgb_range)
             ndarr = normalized.byte().permute(1, 2, 0).cpu().numpy()
             misc.imsave('{}{}.png'.format(filename, p), ndarr)
+
+
 def quantize(img, rgb_range):
     pixel_range = 255 / rgb_range
     return img.mul(pixel_range).clamp(0, 255).round().div(pixel_range)
+
 
 def calc_psnr(sr, hr, scale, rgb_range, benchmark=False):
     diff = (sr - hr).data.div(rgb_range)
@@ -148,6 +158,7 @@ def calc_psnr(sr, hr, scale, rgb_range, benchmark=False):
 
     return -10 * math.log10(mse)
 
+
 def make_optimizer(args, my_model):
     trainable = filter(lambda x: x.requires_grad, my_model.parameters())
 
@@ -166,8 +177,9 @@ def make_optimizer(args, my_model):
 
     kwargs['lr'] = args.lr
     kwargs['weight_decay'] = args.weight_decay
-    
+
     return optimizer_function(trainable, **kwargs)
+
 
 def make_scheduler(args, my_optimizer):
     if args.decay_type == 'step':
@@ -187,4 +199,3 @@ def make_scheduler(args, my_optimizer):
         )
 
     return scheduler
-

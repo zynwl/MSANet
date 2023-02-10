@@ -1,7 +1,13 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: __init__.py
+
 from importlib import import_module
 
 from dataloader import MSDataLoader
-from torch.utils.data.dataloader import default_collate
+
 
 class Data:
     def __init__(self, args):
@@ -21,7 +27,7 @@ class Data:
             module_test = import_module('data.benchmark')
             testset = getattr(module_test, 'Benchmark')(args, train=False)
         else:
-            module_test = import_module('data.' +  args.data_test.lower())
+            module_test = import_module('data.' + args.data_test.lower())
             testset = getattr(module_test, args.data_test)(args, train=False)
 
         self.loader_test = MSDataLoader(
@@ -31,4 +37,3 @@ class Data:
             shuffle=False,
             pin_memory=not args.cpu
         )
-

@@ -1,9 +1,15 @@
+# -*- coding: utf-8 -*-
+# @Time    : 2023/2/10 19:
+# @Author  : zyn
+# @Email : zyn962464@gmail
+# @FileName: __init__.py
+
 import os
 from importlib import import_module
 
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
+
 
 class Model(nn.Module):
     def __init__(self, args, ckp):
@@ -22,7 +28,8 @@ class Model(nn.Module):
 
         module = import_module('model.' + args.model.lower())
         self.model = module.make_model(args).to(self.device)
-        if args.precision == 'half': self.model.half()
+        if args.precision == 'half':
+            self.model.half()
 
         if not args.cpu and args.n_GPUs > 1:
             self.model = nn.DataParallel(self.model, range(args.n_GPUs))
@@ -66,7 +73,7 @@ class Model(nn.Module):
     def save(self, apath, epoch, is_best=False):
         target = self.get_model()
         torch.save(
-            target.state_dict(), 
+            target.state_dict(),
             os.path.join(apath, 'model', 'model_latest.pt')
         )
         if is_best:
@@ -74,7 +81,7 @@ class Model(nn.Module):
                 target.state_dict(),
                 os.path.join(apath, 'model', 'model_best.pt')
             )
-        
+
         if self.save_models:
             torch.save(
                 target.state_dict(),
@@ -134,7 +141,7 @@ class Model(nn.Module):
                 sr_list.extend(sr_batch.chunk(n_GPUs, dim=0))
         else:
             sr_list = [
-                self.forward_chop(patch, shave=shave, min_size=min_size) \
+                self.forward_chop(patch, shave=shave, min_size=min_size)
                 for patch in lr_list
             ]
 
@@ -150,14 +157,15 @@ class Model(nn.Module):
             = sr_list[1][:, :, 0:h_half, (w_size - w + w_half):w_size]
         output[:, :, h_half:h, 0:w_half] \
             = sr_list[2][:, :, (h_size - h + h_half):h_size, 0:w_half]
-        output[:, :, h_half:h, w_half:w] \
-            = sr_list[3][:, :, (h_size - h + h_half):h_size, (w_size - w + w_half):w_size]
+        output[:, :, h_half:h, w_half:w] = sr_list[3][:, :,
+                                                      (h_size - h + h_half):h_size, (w_size - w + w_half):w_size]
 
         return output
 
     def forward_x8(self, x, forward_function):
         def _transform(v, op):
-            if self.precision != 'single': v = v.float()
+            if self.precision != 'single':
+                v = v.float()
 
             v2np = v.data.cpu().numpy()
             if op == 'v':
@@ -168,7 +176,8 @@ class Model(nn.Module):
                 tfnp = v2np.transpose((0, 1, 3, 2)).copy()
 
             ret = torch.Tensor(tfnp).to(self.device)
-            if self.precision == 'half': ret = ret.half()
+            if self.precision == 'half':
+                ret = ret.half()
 
             return ret
 
@@ -189,4 +198,3 @@ class Model(nn.Module):
         output = output_cat.mean(dim=0, keepdim=True)
 
         return output
-
